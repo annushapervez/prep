@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DevPrep — Web Dev Interview Prep</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --bg: #0d0d0d; --surface: #161616; --surface2: #1e1e1e;
+    --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.12);
+    --text: #f0ede8; --muted: #888; --dim: #555;
+    --accent: #c8f060; --accent2: #60c8f0; --accent3: #f0a060;
+    --red: #f06060; --green: #60f0a0;
+    --radius: 10px; --radius-lg: 16px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 15px; line-height: 1.6; min-height: 100vh; }
+  code { font-family: 'DM Mono', monospace; font-size: 0.88em; }
+  .app { display: flex; height: 100vh; overflow: hidden; }
+
+  /* SIDEBAR */
+  .sidebar { width: 220px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; }
+  .logo { padding: 24px 20px 20px; border-bottom: 1px solid var(--border); }
+  .logo-mark { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; letter-spacing: -0.5px; color: var(--accent); }
+  .logo-sub { font-size: 11px; color: var(--muted); margin-top: 2px; letter-spacing: 0.5px; text-transform: uppercase; }
+  .nav { padding: 16px 10px; flex: 1; }
+  .nav-label { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--dim); padding: 0 10px; margin: 16px 0 6px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; cursor: pointer; color: var(--muted); font-size: 13.5px; transition: all 0.15s; user-select: none; }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: var(--surface2); color: var(--text); }
+  .nav-item.active .ndot { opacity: 1; }
+  .ndot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); opacity: 0; margin-left: auto; }
+  .nav-icon { font-size: 15px; width: 18px; text-align: center; }
+  .sidebar-footer { padding: 16px 20px; border-top: 1px solid var(--border); font-size: 12px; color: var(--dim); }
+  .sync-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 11px; }
+  .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--dim); transition: background 0.3s; flex-shrink: 0; }
+  .sync-dot.syncing { background: var(--accent3); }
+  .sync-dot.synced { background: var(--accent); }
+  .sync-dot.error { background: var(--red); }
+  .prog-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 5px; }
+  .prog-track { height: 4px; background: var(--surface2); border-radius: 999px; }
+  .prog-fill { height: 100%; background: var(--accent); border-radius: 999px; transition: width 0.4s; }
+
+  /* MAIN */
+  .main { flex: 1; overflow-y: auto; background: var(--bg); }
+  .page { display: none; padding: 36px 40px; max-width: 900px; animation: fadeIn 0.2s ease; }
+  .page.active { display: block; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+  .page-title { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 6px; }
+  .page-desc { color: var(--muted); font-size: 14px; margin-bottom: 32px; }
+
+  /* DASHBOARD */
+  .stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 28px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+  .stat-label { font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--dim); }
+  .stat-val { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 700; margin-top: 4px; }
+  .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .dash-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; }
+  .dash-card-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 14px; }
+  .week-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .week-num { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--dim); width: 54px; }
+  .week-bar-track { flex: 1; height: 6px; background: var(--surface2); border-radius: 999px; }
+  .week-bar { height: 100%; background: var(--accent2); border-radius: 999px; transition: width 0.4s; }
+  .week-pct { font-size: 12px; color: var(--muted); width: 30px; text-align: right; }
+  .next-up { list-style: none; }
+  .next-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .next-item:last-child { border: none; }
+  .npill { font-family: 'DM Mono', monospace; font-size: 10px; padding: 2px 7px; border-radius: 999px; flex-shrink: 0; }
+  .pill-js { background: rgba(240,160,96,0.15); color: var(--accent3); }
+  .pill-react { background: rgba(96,200,240,0.15); color: var(--accent2); }
+  .pill-html { background: rgba(200,240,96,0.15); color: var(--accent); }
+  .pill-api { background: rgba(240,96,96,0.15); color: var(--red); }
+
+  /* ROADMAP */
+  .roadmap-timeline { position: relative; padding-left: 28px; }
+  .roadmap-timeline::before { content:''; position:absolute; left:8px; top:16px; bottom:0; width:1px; background:var(--border2); }
+  .rm-step { position: relative; margin-bottom: 24px; }
+  .rm-dot { position:absolute; left:-24px; top:14px; width:14px; height:14px; border-radius:50%; border:2px solid var(--border2); background:var(--bg); z-index:1; transition:all 0.2s; }
+  .rm-dot.done { background:var(--accent); border-color:var(--accent); }
+  .rm-dot.cur { background:var(--accent2); border-color:var(--accent2); box-shadow:0 0 0 4px rgba(96,200,240,0.15); }
+  .rm-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); padding:18px 20px; transition:border-color 0.15s; }
+  .rm-card:hover { border-color:var(--border2); }
+  .rm-card.done { border-color:rgba(200,240,96,0.2); }
+  .rm-card.cur { border-color:rgba(96,200,240,0.3); }
+  .rm-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+  .rm-title { font-family:'Syne',sans-serif; font-size:15px; font-weight:600; }
+  .rm-week { font-family:'DM Mono',monospace; font-size:11px; color:var(--dim); }
+  .rm-desc { font-size:13px; color:var(--muted); line-height:1.6; }
+  .rm-tags { display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; }
+  .tag { font-size:11px; padding:2px 8px; border-radius:999px; border:1px solid var(--border2); color:var(--dim); font-family:'DM Mono',monospace; }
+  .rm-btn { display:inline-flex; align-items:center; gap:6px; margin-top:12px; font-size:12px; padding:5px 12px; border-radius:6px; border:1px solid var(--border2); background:transparent; color:var(--muted); cursor:pointer; transition:all 0.15s; font-family:'DM Sans',sans-serif; }
+  .rm-btn:hover { border-color:var(--accent); color:var(--accent); }
+  .rm-btn.done { border-color:var(--accent); color:var(--accent); background:rgba(200,240,96,0.07); }
+
+  /* TRACKER */
+  .filter-btns { display:flex; gap:6px; margin-bottom:20px; }
+  .fbtn { font-size:12px; padding:5px 12px; border-radius:6px; border:1px solid var(--border2); background:transparent; color:var(--muted); cursor:pointer; font-family:'DM Sans',sans-serif; transition:all 0.15s; }
+  .fbtn.active, .fbtn:hover { background:var(--surface2); color:var(--text); }
+  .section-block { margin-bottom:28px; }
+  .section-title { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .section-name { font-family:'Syne',sans-serif; font-size:13px; font-weight:600; letter-spacing:0.3px; }
+  .sec-count { font-size:11px; color:var(--dim); font-family:'DM Mono',monospace; }
+  .sec-pct { font-size:11px; color:var(--muted); margin-left:auto; }
+  .topic-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
+  .topic-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:12px 14px; display:flex; align-items:flex-start; gap:10px; cursor:pointer; transition:border-color 0.15s; user-select:none; }
+  .topic-card:hover { border-color:var(--border2); }
+  .topic-card.state-progress { border-left:2px solid var(--accent3); }
+  .topic-card.state-done { border-left:2px solid var(--accent); background:rgba(200,240,96,0.03); }
+  .tcheck { width:18px; height:18px; border-radius:5px; border:1px solid var(--border2); flex-shrink:0; margin-top:1px; display:flex; align-items:center; justify-content:center; font-size:10px; transition:all 0.15s; }
+  .tcheck.progress { background:rgba(240,160,96,0.2); border-color:var(--accent3); color:var(--accent3); }
+  .tcheck.done { background:rgba(200,240,96,0.2); border-color:var(--accent); color:var(--accent); }
+  .tlabel { font-size:13px; color:var(--text); }
+  .tsub { font-size:11px; color:var(--dim); margin-top:2px; font-family:'DM Mono',monospace; }
+
+  /* QUESTIONS */
+  .q-filters { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:20px; }
+  .qbtn { font-size:12px; padding:5px 12px; border-radius:6px; border:1px solid var(--border2); background:transparent; color:var(--muted); cursor:pointer; font-family:'DM Sans',sans-serif; transition:all 0.15s; }
+  .qbtn:hover, .qbtn.active { background:var(--surface2); color:var(--text); }
+  .qbtn.cat-js.active { color:var(--accent3); border-color:var(--accent3); background:rgba(240,160,96,0.08); }
+  .qbtn.cat-html.active { color:var(--accent); border-color:var(--accent); background:rgba(200,240,96,0.08); }
+  .qbtn.cat-react.active { color:var(--accent2); border-color:var(--accent2); background:rgba(96,200,240,0.08); }
+  .qbtn.cat-api.active { color:var(--red); border-color:var(--red); background:rgba(240,96,96,0.08); }
+  .q-list { display:flex; flex-direction:column; gap:10px; }
+  .q-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; transition:border-color 0.15s; }
+  .q-card:hover { border-color:var(--border2); }
+  .q-head { padding:14px 16px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; gap:12px; }
+  .qdot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .dot-js { background:var(--accent3); } .dot-html { background:var(--accent); } .dot-react { background:var(--accent2); } .dot-api { background:var(--red); }
+  .qtext { font-size:13.5px; flex:1; }
+  .qtog { font-size:12px; color:var(--dim); flex-shrink:0; transition:transform 0.2s; }
+  .qtog.open { transform:rotate(180deg); }
+  .q-ans { display:none; padding:14px 16px 16px; border-top:1px solid var(--border); }
+  .q-ans.open { display:block; animation:fadeIn 0.15s; }
+  .q-ans p { font-size:13px; color:var(--muted); line-height:1.7; }
+  .q-ans code { background:var(--surface2); padding:1px 5px; border-radius:4px; color:var(--accent2); }
+  .diff { font-size:10px; padding:2px 7px; border-radius:999px; font-family:'DM Mono',monospace; flex-shrink:0; }
+  .diff-easy { background:rgba(96,240,160,0.1); color:var(--green); }
+  .diff-med { background:rgba(240,160,96,0.1); color:var(--accent3); }
+  .diff-hard { background:rgba(240,96,96,0.1); color:var(--red); }
+
+  /* MOCK */
+  .mock-setup { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); padding:24px; margin-bottom:20px; }
+  .mock-options { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-top:16px; }
+  .mock-opt { border:1px solid var(--border2); border-radius:var(--radius); padding:14px; cursor:pointer; text-align:center; transition:all 0.15s; }
+  .mock-opt:hover, .mock-opt.selected { border-color:var(--accent2); background:rgba(96,200,240,0.05); }
+  .mock-opt-icon { font-size:22px; margin-bottom:6px; }
+  .mock-opt-name { font-size:13px; font-weight:500; }
+  .mock-opt-desc { font-size:11px; color:var(--dim); margin-top:3px; }
+  .start-btn { display:inline-flex; align-items:center; gap:8px; margin-top:20px; padding:10px 22px; border-radius:8px; background:var(--accent); color:#0d0d0d; font-weight:600; font-size:14px; cursor:pointer; border:none; font-family:'DM Sans',sans-serif; transition:opacity 0.15s; }
+  .start-btn:hover { opacity:0.88; }
+  .mock-session { display:none; }
+  .mock-session.active { display:block; }
+  .mock-q-card { background:var(--surface); border:1px solid var(--border2); border-radius:var(--radius-lg); padding:24px; margin-bottom:16px; }
+  .mock-q-label { font-size:11px; letter-spacing:1px; text-transform:uppercase; color:var(--dim); margin-bottom:12px; }
+  .mock-q-text { font-family:'Syne',sans-serif; font-size:20px; font-weight:600; line-height:1.4; }
+  .mock-hint { background:rgba(96,200,240,0.05); border:1px solid rgba(96,200,240,0.15); border-radius:var(--radius); padding:12px 16px; font-size:13px; color:var(--muted); margin-bottom:16px; display:none; }
+  .mock-hint.show { display:block; }
+  .mock-textarea { width:100%; background:var(--surface2); border:1px solid var(--border2); border-radius:var(--radius); padding:14px; color:var(--text); font-family:'DM Sans',sans-serif; font-size:14px; resize:vertical; min-height:140px; outline:none; margin-bottom:12px; transition:border-color 0.15s; }
+  .mock-textarea:focus { border-color:var(--accent2); }
+  .mock-actions { display:flex; gap:10px; flex-wrap:wrap; }
+  .mbtn { padding:8px 16px; border-radius:7px; font-size:13px; cursor:pointer; font-family:'DM Sans',sans-serif; border:1px solid var(--border2); background:transparent; color:var(--muted); transition:all 0.15s; }
+  .mbtn:hover { background:var(--surface2); color:var(--text); }
+  .mbtn.primary { background:var(--accent); color:#0d0d0d; border-color:var(--accent); font-weight:500; }
+  .mbtn.primary:hover { opacity:0.88; }
+  .mock-feedback { background:var(--surface); border:1px solid rgba(200,240,96,0.2); border-radius:var(--radius-lg); padding:20px; margin-top:16px; display:none; }
+  .mock-feedback.show { display:block; animation:fadeIn 0.2s; }
+  .fb-label { font-size:11px; letter-spacing:1px; text-transform:uppercase; color:var(--accent); margin-bottom:10px; }
+  .fb-text { font-size:13.5px; color:var(--muted); line-height:1.7; }
+  .score-row { display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+  .score-dots { display:flex; gap:4px; }
+  .sdot { width:10px; height:10px; border-radius:50%; background:var(--border2); }
+  .sdot.on { background:var(--accent); }
+  .timer { font-family:'DM Mono',monospace; font-size:13px; color:var(--dim); margin-left:auto; }
+
+  /* NOTES */
+  .notes-layout { display:grid; grid-template-columns:200px 1fr; gap:16px; height:calc(100vh - 160px); }
+  .notes-list { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); overflow-y:auto; padding:10px; }
+  .note-item { padding:10px; border-radius:7px; cursor:pointer; transition:background 0.15s; margin-bottom:4px; }
+  .note-item:hover, .note-item.active { background:var(--surface2); }
+  .note-item-title { font-size:13px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .note-item-date { font-size:11px; color:var(--dim); margin-top:2px; font-family:'DM Mono',monospace; }
+  .new-note-btn { display:flex; align-items:center; gap:6px; padding:8px 10px; border-radius:7px; cursor:pointer; font-size:13px; color:var(--accent); transition:background 0.15s; margin-bottom:8px; border:1px dashed rgba(200,240,96,0.3); }
+  .new-note-btn:hover { background:rgba(200,240,96,0.05); }
+  .note-editor { display:flex; flex-direction:column; }
+  .note-title-in { background:transparent; border:none; outline:none; font-family:'Syne',sans-serif; font-size:22px; font-weight:700; color:var(--text); margin-bottom:12px; border-bottom:1px solid var(--border); padding-bottom:12px; width:100%; }
+  .note-title-in::placeholder { color:var(--dim); }
+  .note-body-in { background:transparent; border:none; outline:none; font-family:'DM Sans',sans-serif; font-size:14px; color:var(--muted); resize:none; flex:1; line-height:1.8; min-height:300px; }
+  .note-body-in::placeholder { color:var(--dim); }
+  .note-saved { font-size:11px; color:var(--dim); font-family:'DM Mono',monospace; margin-top:8px; }
+
+  /* LOADING */
+  .loader { position:fixed; inset:0; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:100; transition:opacity 0.4s; }
+  .loader.hidden { opacity:0; pointer-events:none; }
+  .loader-logo { font-family:'Syne',sans-serif; font-size:32px; font-weight:800; color:var(--accent); margin-bottom:12px; }
+  .loader-text { font-size:13px; color:var(--dim); font-family:'DM Mono',monospace; }
+  .loader-bar { width:160px; height:2px; background:var(--surface2); border-radius:999px; margin-top:16px; overflow:hidden; }
+  .loader-fill { height:100%; background:var(--accent); border-radius:999px; animation:lp 1.2s ease-in-out infinite; }
+  @keyframes lp { 0%,100%{width:20%;margin-left:0} 50%{width:60%;margin-left:40%} }
+
+  ::-webkit-scrollbar { width:5px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  ::-webkit-scrollbar-thumb { background:var(--surface2); border-radius:999px; }
+</style>
+</head>
+<body>
+
+<div class="loader" id="loader">
+  <div class="loader-logo">DevPrep</div>
+  <div class="loader-text">Connecting to database...</div>
+  <div class="loader-bar"><div class="loader-fill"></div></div>
+</div>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-mark">DevPrep</div>
+      <div class="logo-sub">Junior track</div>
+    </div>
+    <nav class="nav">
+      <div class="nav-label">Overview</div>
+      <div class="nav-item active" onclick="showPage('dashboard',this)"><span class="nav-icon">⬡</span>Dashboard<span class="ndot"></span></div>
+      <div class="nav-label">Study</div>
+      <div class="nav-item" onclick="showPage('roadmap',this)"><span class="nav-icon">→</span>Roadmap<span class="ndot"></span></div>
+      <div class="nav-item" onclick="showPage('tracker',this)"><span class="nav-icon">◫</span>Topic tracker<span class="ndot"></span></div>
+      <div class="nav-item" onclick="showPage('questions',this)"><span class="nav-icon">?</span>Question bank<span class="ndot"></span></div>
+      <div class="nav-label">Practice</div>
+      <div class="nav-item" onclick="showPage('mock',this)"><span class="nav-icon">▷</span>Mock interview<span class="ndot"></span></div>
+      <div class="nav-item" onclick="showPage('notes',this)"><span class="nav-icon">✎</span>Notes<span class="ndot"></span></div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sync-row"><div class="sync-dot" id="sdot"></div><span id="slabel">connecting...</span></div>
+      <div class="prog-label"><span>Overall</span><span id="sidebar-pct">0%</span></div>
+      <div class="prog-track"><div class="prog-fill" id="sidebar-bar" style="width:0%"></div></div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <!-- DASHBOARD -->
+    <div id="page-dashboard" class="page active">
+      <div class="page-title">Dashboard</div>
+      <div class="page-desc">Your junior web dev interview prep — synced to the cloud.</div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Topics done</div><div class="stat-val" style="color:var(--accent)" id="s-done">0</div></div>
+        <div class="stat-card"><div class="stat-label">In progress</div><div class="stat-val" style="color:var(--accent3)" id="s-prog">0</div></div>
+        <div class="stat-card"><div class="stat-label">Total topics</div><div class="stat-val" style="color:var(--accent2)">30</div></div>
+        <div class="stat-card"><div class="stat-label">Questions</div><div class="stat-val" style="color:var(--muted)">18</div></div>
+      </div>
+      <div class="dash-grid">
+        <div class="dash-card"><div class="dash-card-title">Progress by section</div><div id="phase-bars"></div></div>
+        <div class="dash-card"><div class="dash-card-title">Suggested next up</div><ul class="next-up" id="next-up"></ul></div>
+      </div>
+    </div>
+
+    <!-- ROADMAP -->
+    <div id="page-roadmap" class="page">
+      <div class="page-title">Study roadmap</div>
+      <div class="page-desc">10-week plan tailored for junior frontend + backend roles.</div>
+      <div class="roadmap-timeline" id="roadmap-tl"></div>
+    </div>
+
+    <!-- TRACKER -->
+    <div id="page-tracker" class="page">
+      <div class="page-title">Topic tracker</div>
+      <div class="page-desc">Click once → in progress · click again → done · click again → reset.</div>
+      <div class="filter-btns">
+        <button class="fbtn active" onclick="filterTopics('all',this)">All</button>
+        <button class="fbtn" onclick="filterTopics('none',this)">Not started</button>
+        <button class="fbtn" onclick="filterTopics('progress',this)">In progress</button>
+        <button class="fbtn" onclick="filterTopics('done',this)">Done</button>
+      </div>
+      <div id="tracker-content"></div>
+    </div>
+
+    <!-- QUESTIONS -->
+    <div id="page-questions" class="page">
+      <div class="page-title">Question bank</div>
+      <div class="page-desc">Click a question to reveal a model answer.</div>
+      <div class="q-filters">
+        <button class="qbtn active" onclick="filterQ('all',this)">All</button>
+        <button class="qbtn cat-html" onclick="filterQ('html',this)">HTML & CSS</button>
+        <button class="qbtn cat-js" onclick="filterQ('js',this)">JavaScript</button>
+        <button class="qbtn cat-react" onclick="filterQ('react',this)">React</button>
+        <button class="qbtn cat-api" onclick="filterQ('api',this)">Backend & APIs</button>
+      </div>
+      <div class="q-list" id="q-list"></div>
+    </div>
+
+    <!-- MOCK -->
+    <div id="page-mock" class="page">
+      <div class="page-title">Mock interview</div>
+      <div class="page-desc">Practice answering questions with timer and model feedback.</div>
+      <div class="mock-setup" id="mock-setup">
+        <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:600;margin-bottom:4px;">Choose your focus</div>
+        <div style="font-size:13px;color:var(--muted)">Pick a category to drill into:</div>
+        <div class="mock-options">
+          <div class="mock-opt selected" onclick="selMockCat('all',this)"><div class="mock-opt-icon">⬡</div><div class="mock-opt-name">Mixed</div><div class="mock-opt-desc">All topics</div></div>
+          <div class="mock-opt" onclick="selMockCat('js',this)"><div class="mock-opt-icon">{ }</div><div class="mock-opt-name">JavaScript</div><div class="mock-opt-desc">Core JS concepts</div></div>
+          <div class="mock-opt" onclick="selMockCat('react',this)"><div class="mock-opt-icon">⟳</div><div class="mock-opt-name">React</div><div class="mock-opt-desc">Hooks & patterns</div></div>
+        </div>
+        <button class="start-btn" onclick="startMock()">Start mock interview →</button>
+      </div>
+      <div class="mock-session" id="mock-session">
+        <div class="mock-q-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div class="mock-q-label" id="mq-label">Question 1 of 5</div>
+            <div class="timer" id="mq-timer">00:00</div>
+          </div>
+          <div class="mock-q-text" id="mq-text"></div>
+        </div>
+        <div class="mock-hint" id="mq-hint"></div>
+        <textarea class="mock-textarea" id="mq-answer" placeholder="Type your answer here... think out loud, structure your response, then write."></textarea>
+        <div class="mock-actions">
+          <button class="mbtn primary" onclick="submitMock()">Submit answer</button>
+          <button class="mbtn" onclick="showHint()">Show hint</button>
+          <button class="mbtn" onclick="skipMock()">Skip →</button>
+          <button class="mbtn" onclick="endMock()">End session</button>
+        </div>
+        <div class="mock-feedback" id="mq-feedback">
+          <div class="fb-label">Feedback</div>
+          <div class="score-row" id="mq-score"></div>
+          <div class="fb-text" id="mq-fb-text"></div>
+          <button class="mbtn primary" style="margin-top:14px;" onclick="nextMock()">Next question →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTES -->
+    <div id="page-notes" class="page">
+      <div class="page-title">Notes</div>
+      <div class="page-desc">Capture key concepts as you study. Saved to the cloud.</div>
+      <div class="notes-layout">
+        <div class="notes-list">
+          <div class="new-note-btn" onclick="newNote()">+ New note</div>
+          <div id="note-items"></div>
+        </div>
+        <div class="note-editor">
+          <input class="note-title-in" id="note-title" placeholder="Note title..." oninput="schedNoteSave()">
+          <textarea class="note-body-in" id="note-body" placeholder="Start typing your notes here...&#10;&#10;Great things to capture:&#10;• Key concepts in your own words&#10;• Code patterns you want to remember&#10;• Questions you couldn't answer" oninput="schedNoteSave()"></textarea>
+          <div class="note-saved" id="note-saved"></div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ── SUPABASE ──────────────────────────────────────────
+const SURL = 'https://okofhclusdrvrbjbocqf.supabase.co';
+const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9rb2ZoY2x1c2RydnJiamJvY3FmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxNjc2OTksImV4cCI6MjA5MDc0MzY5OX0.N5TdP7VYyLVQwU1BMWe9B3zJMdqMteAb7AB_5xNMQk4';
+const db = supabase.createClient(SURL, SKEY);
+
+function setSync(s) {
+  document.getElementById('sdot').className = 'sync-dot ' + s;
+  document.getElementById('slabel').textContent = s === 'synced' ? 'synced' : s === 'syncing' ? 'saving...' : s === 'error' ? 'offline' : 'connecting...';
+}
+
+// ── STATIC DATA ───────────────────────────────────────
+const TOPICS = {
+  'HTML & CSS': [
+    {t:'Box model',s:'margin, padding, border, content'},
+    {t:'Flexbox',s:'axes, justify, align, wrap'},
+    {t:'CSS Grid',s:'template, fr, areas'},
+    {t:'Semantic HTML',s:'nav, main, article, aside'},
+    {t:'CSS specificity',s:'selectors, cascade, !important'},
+    {t:'Responsive design',s:'media queries, mobile-first'},
+    {t:'Accessibility',s:'ARIA, focus, alt text'},
+    {t:'CSS custom properties',s:'variables, theming'},
+  ],
+  'JavaScript': [
+    {t:'Closures',s:'scope, lexical env'},
+    {t:'Async / await',s:'promises, event loop'},
+    {t:'DOM manipulation',s:'querySelector, events'},
+    {t:'Array methods',s:'map, filter, reduce'},
+    {t:'this keyword',s:'context, bind, call'},
+    {t:'ES6+ features',s:'destructuring, spread, modules'},
+    {t:'Error handling',s:'try/catch, error types'},
+    {t:'Type coercion',s:'==, ===, typeof'},
+  ],
+  'React': [
+    {t:'useState & useEffect',s:'core hooks'},
+    {t:'Props vs state',s:'data flow'},
+    {t:'Component lifecycle',s:'mount, update, unmount'},
+    {t:'Context API',s:'avoiding prop drilling'},
+    {t:'Controlled forms',s:'form handling'},
+    {t:'Virtual DOM',s:'reconciliation, diffing'},
+    {t:'Performance',s:'memo, lazy, Suspense'},
+  ],
+  'Backend & APIs': [
+    {t:'REST principles',s:'methods, status codes'},
+    {t:'HTTP fundamentals',s:'headers, cookies, CORS'},
+    {t:'Authentication',s:'JWT, sessions, OAuth'},
+    {t:'Node.js basics',s:'runtime, modules, npm'},
+    {t:'Express.js',s:'routes, middleware'},
+    {t:'Databases basics',s:'SQL vs NoSQL concepts'},
+    {t:'Error handling in APIs',s:'status codes, patterns'},
+  ],
+};
+
+const QS = [
+  {cat:'html',diff:'easy',q:"What's the difference between display: none and visibility: hidden?",a:"Both hide elements, but <code>display: none</code> removes the element from layout entirely — it takes up no space. <code>visibility: hidden</code> hides it visually but it still occupies space. <code>opacity: 0</code> also keeps the space but still receives pointer events."},
+  {cat:'html',diff:'easy',q:"Explain CSS specificity and how it's calculated.",a:"Specificity determines which CSS rule wins when multiple rules target the same element. Scored as: inline styles (1,0,0,0), IDs (0,1,0,0), classes/pseudoclasses (0,0,1,0), elements (0,0,0,1). Highest score wins. <code>!important</code> overrides everything — use sparingly."},
+  {cat:'html',diff:'easy',q:"How would you center a div both vertically and horizontally?",a:"Cleanest modern way: on the parent set <code>display: flex; justify-content: center; align-items: center</code>. CSS Grid also works: <code>display: grid; place-items: center</code>. Absolute positioning with <code>top:50%; left:50%; transform:translate(-50%,-50%)</code> works but is less clean."},
+  {cat:'html',diff:'med',q:"What is the CSS box model, and how does box-sizing change it?",a:"Every element is a box with content, padding, border, and margin. By default (<code>content-box</code>), width/height only apply to content, so padding and border add to the total. With <code>border-box</code>, width/height include padding and border — much more predictable. Most developers set border-box globally."},
+  {cat:'js',diff:'med',q:"What is a closure and can you give a practical example?",a:"A closure is a function that retains access to variables from its outer scope even after that scope has finished. Classic example: a counter that returns an inner function — it can increment a private variable outside callers can't access. Closures underpin the module pattern, partial application, and React hooks."},
+  {cat:'js',diff:'easy',q:"What's the difference between == and === in JavaScript?",a:"<code>===</code> checks value AND type — no conversions. <code>==</code> does type coercion first, leading to surprises like <code>0 == false</code> being true. Almost always use <code>===</code> in real code."},
+  {cat:'js',diff:'med',q:"How does async/await relate to Promises?",a:"<code>async/await</code> is syntactic sugar over Promises — an async function always returns a Promise. <code>await</code> pauses until the Promise settles. <code>await p</code> is equivalent to <code>p.then(v => ...)</code>. Use try/catch with async/await instead of .catch(). Both are valid; async/await is usually more readable for sequential operations."},
+  {cat:'js',diff:'med',q:"What is event delegation and why is it useful?",a:"Attach one listener to a parent instead of many to individual children. Events bubble up, so the parent catches them. Check <code>event.target</code> to know which child was clicked. More memory-efficient (one listener vs hundreds) and automatically works for dynamically added elements."},
+  {cat:'js',diff:'hard',q:"Explain the JavaScript event loop.",a:"JS is single-threaded. The call stack runs synchronous code. Async ops (setTimeout, fetch) go through Web APIs; callbacks queue in the callback queue (or microtask queue for Promises). The event loop moves items from the queue to the stack when it's empty. Microtasks (Promises) have higher priority than macrotasks (setTimeout)."},
+  {cat:'react',diff:'easy',q:"What's the difference between state and props in React?",a:"Props come from a parent and are read-only — external inputs. State is data the component manages itself that can change, triggering re-renders. Rule of thumb: if data can come from outside → prop. If the component owns it → state."},
+  {cat:'react',diff:'med',q:"When would you use useEffect? What are common pitfalls with the dependency array?",a:"<code>useEffect</code> handles side effects: fetching, subscriptions, DOM mutations, timers. Pitfalls: empty array <code>[]</code> runs once on mount; omitting it runs on every render; missing dependencies cause stale closures; forgetting a cleanup return causes memory leaks."},
+  {cat:'react',diff:'med',q:"How does the virtual DOM work and why does React use it?",a:"React maintains a lightweight JS copy of the real DOM. On state changes it re-renders the virtual DOM, diffs against the previous version (reconciliation), then makes only the minimal real DOM changes needed. Much faster than naively updating the whole DOM."},
+  {cat:'react',diff:'hard',q:"What is prop drilling and how do you solve it?",a:"Prop drilling is passing props through layers of components that don't need them just to reach a deeply nested child. Solutions: (1) Context API — consume anywhere in the tree. (2) State management (Zustand, Redux) for complex cases. (3) Component composition — restructure so the consuming component is less nested."},
+  {cat:'api',diff:'easy',q:"What are the main HTTP methods and when would you use each?",a:"<code>GET</code> — retrieve (no body, cacheable). <code>POST</code> — create. <code>PUT</code> — replace entirely. <code>PATCH</code> — partial update. <code>DELETE</code> — remove. Following these semantics makes APIs predictable and allows caching and proxies to work correctly."},
+  {cat:'api',diff:'easy',q:"What's the difference between authentication and authorization?",a:"Authentication answers 'who are you?' — verifying identity (login, JWT). Authorization answers 'what can you do?' — checking permissions after identity is confirmed. You can be authenticated but not authorized (logged in but no admin access)."},
+  {cat:'api',diff:'med',q:"Explain what CORS is and why it exists.",a:"CORS is a browser security mechanism restricting requests to a different origin (domain/port/protocol). It prevents malicious sites from reading sensitive data using the user's credentials. Servers opt in via <code>Access-Control-Allow-Origin</code> headers. Your own APIs must explicitly allow cross-origin requests."},
+  {cat:'api',diff:'med',q:"What is a REST API and what makes an API RESTful?",a:"REST is an architectural style. Key constraints: (1) Stateless — each request is self-contained. (2) Resource-based URLs (<code>/users/123</code> not <code>/getUser?id=123</code>). (3) HTTP methods signal intent. (4) Uniform interface. An API is RESTful when it follows these conventions consistently."},
+  {cat:'api',diff:'hard',q:"How does JWT authentication work?",a:"On login the server creates a JWT — Base64 header + payload (user data) + signature. The signature uses a server secret so it can't be forged. The client sends it with every request in <code>Authorization: Bearer &lt;token&gt;</code>. The server verifies the signature — no DB lookup needed, making it fast and stateless. Downside: tokens can't be invalidated until expiry."},
+];
+
+const ROADMAP = [
+  {week:'Wk 1–2',title:'HTML & CSS fundamentals',desc:'Box model, flexbox, grid, semantic HTML, accessibility basics, CSS specificity, and responsive design.',tags:['box-model','flexbox','grid','a11y']},
+  {week:'Wk 3–4',title:'Core JavaScript concepts',desc:'Closures, async/await, promises, event loop, DOM manipulation, array methods. Most technical screens test these heavily.',tags:['closures','async','DOM','array methods']},
+  {week:'Wk 5–6',title:'React essentials',desc:'Hooks (useState, useEffect, useContext), component lifecycle, lifting state, controlled forms, basic performance patterns.',tags:['hooks','state','props','lifecycle']},
+  {week:'Wk 7–8',title:'Backend & APIs',desc:'REST principles, HTTP methods & status codes, fetch/axios, authentication basics (JWT, sessions), Node.js/Express fundamentals.',tags:['REST','HTTP','JWT','Express']},
+  {week:'Wk 9–10',title:'Interview practice & mock rounds',desc:'Timed coding challenges, behavioral questions (STAR format), live coding simulation. Focus on communication while coding.',tags:['mock','behavioral','STAR','coding']},
+];
+
+// ── STATE ─────────────────────────────────────────────
+const TS = {}; // topic states
+const RM = new Set(); // roadmap done
+let notes = [], activeNote = null;
+let tFilter = 'all', qFilter = 'all', mockCat = 'all';
+let mockQ = [], mockIdx = 0, mockInt = null, mockSec = 0;
+let noteSaveT = null;
+const allTopics = [];
+
+Object.entries(TOPICS).forEach(([sec, topics]) => {
+  topics.forEach((t, i) => {
+    const k = sec + '-' + i;
+    allTopics.push({k, sec, ...t});
+    TS[k] = 'none';
+  });
+});
+
+// ── DB ────────────────────────────────────────────────
+async function loadDB() {
+  try {
+    const [tr, rr, nr] = await Promise.all([
+      db.from('topics').select('*'),
+      db.from('roadmap').select('*'),
+      db.from('notes').select('*').order('updated_at', {ascending:false}),
+    ]);
+    if (tr.data) tr.data.forEach(r => { if (TS.hasOwnProperty(r.key)) TS[r.key] = r.state; });
+    if (rr.data) rr.data.forEach(r => { if (r.done) RM.add(r.step); });
+    if (nr.data) notes = nr.data;
+    setSync('synced');
+  } catch(e) { setSync('error'); }
+}
+
+async function dbSaveTopic(key, state) {
+  setSync('syncing');
+  const {error} = await db.from('topics').upsert({key, state});
+  setSync(error ? 'error' : 'synced');
+}
+
+async function dbSaveRM(step, done) {
+  setSync('syncing');
+  const {error} = await db.from('roadmap').upsert({step, done});
+  setSync(error ? 'error' : 'synced');
+}
+
+async function dbSaveNote(note) {
+  setSync('syncing');
+  if (note.id) {
+    const {error} = await db.from('notes').update({title:note.title, body:note.body, updated_at:new Date().toISOString()}).eq('id', note.id);
+    setSync(error ? 'error' : 'synced');
+  } else {
+    const {data, error} = await db.from('notes').insert({title:note.title, body:note.body}).select().single();
+    if (data) { note.id = data.id; note.updated_at = data.updated_at; }
+    setSync(error ? 'error' : 'synced');
+  }
+  renderNoteList();
+}
+
+// ── NAV ───────────────────────────────────────────────
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  el.classList.add('active');
+  if (id==='dashboard') renderDash();
+  if (id==='roadmap') renderRM();
+  if (id==='tracker') renderTracker();
+  if (id==='questions') renderQ();
+  if (id==='notes') renderNotes();
+}
+
+// ── PROGRESS ──────────────────────────────────────────
+const getDone = () => Object.values(TS).filter(s=>s==='done').length;
+const getProg = () => Object.values(TS).filter(s=>s==='progress').length;
+const getPct  = () => Math.round(getDone() / Object.keys(TS).length * 100);
+
+function updProgress() {
+  const pct = getPct();
+  document.getElementById('sidebar-pct').textContent = pct + '%';
+  document.getElementById('sidebar-bar').style.width = pct + '%';
+  const sd = document.getElementById('s-done'), sp = document.getElementById('s-prog');
+  if (sd) sd.textContent = getDone();
+  if (sp) sp.textContent = getProg();
+}
+
+// ── DASHBOARD ─────────────────────────────────────────
+function renderDash() {
+  updProgress();
+  const catPill = {'HTML & CSS':'html','JavaScript':'js','React':'react','Backend & APIs':'api'};
+  const cls = {html:'pill-html',js:'pill-js',react:'pill-react',api:'pill-api'};
+  document.getElementById('phase-bars').innerHTML = Object.entries(TOPICS).map(([s,ts]) => {
+    const done = ts.filter((_,i) => TS[s+'-'+i]==='done').length;
+    const pct = Math.round(done/ts.length*100);
+    return `<div class="week-row"><div class="week-num">${s.split(' ')[0].substring(0,8)}</div><div class="week-bar-track"><div class="week-bar" style="width:${pct}%"></div></div><div class="week-pct">${pct}%</div></div>`;
+  }).join('');
+  const next = allTopics.filter(t=>TS[t.k]==='none').slice(0,5);
+  document.getElementById('next-up').innerHTML = next.map(t=>`<li class="next-item"><span class="npill ${cls[catPill[t.sec]]}">${catPill[t.sec]}</span>${t.t}</li>`).join('')
+    || '<li class="next-item" style="color:var(--accent)">All topics started!</li>';
+}
+
+// ── ROADMAP ───────────────────────────────────────────
+function getActive() { for(let i=0;i<ROADMAP.length;i++){if(!RM.has(i))return i;} return ROADMAP.length-1; }
+function renderRM() {
+  document.getElementById('roadmap-tl').innerHTML = ROADMAP.map((s,i)=>{
+    const done=RM.has(i), cur=i===getActive();
+    return `<div class="rm-step">
+      <div class="rm-dot ${done?'done':cur?'cur':''}"></div>
+      <div class="rm-card ${done?'done':cur?'cur':''}">
+        <div class="rm-header"><div class="rm-title">${s.title}</div><div class="rm-week">${s.week}</div></div>
+        <div class="rm-desc">${s.desc}</div>
+        <div class="rm-tags">${s.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+        <button class="rm-btn ${done?'done':''}" onclick="toggleRM(${i})">${done?'✓ Completed':'Mark complete'}</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+async function toggleRM(i) {
+  RM.has(i)?RM.delete(i):RM.add(i);
+  renderRM();
+  await dbSaveRM(i, RM.has(i));
+}
+
+// ── TRACKER ───────────────────────────────────────────
+function renderTracker() {
+  document.getElementById('tracker-content').innerHTML = Object.entries(TOPICS).map(([sec,ts])=>{
+    const done=ts.filter((_,i)=>TS[sec+'-'+i]==='done').length;
+    const pct=Math.round(done/ts.length*100);
+    const cards=ts.map((t,i)=>{
+      const k=sec+'-'+i, s=TS[k];
+      if(tFilter!=='all'&&s!==tFilter)return '';
+      return `<div class="topic-card state-${s}" onclick="cycleTS('${k}')">
+        <div class="tcheck ${s}">${s==='done'?'✓':s==='progress'?'~':''}</div>
+        <div><div class="tlabel">${t.t}</div><div class="tsub">${t.s}</div></div>
+      </div>`;
+    }).join('');
+    if(tFilter!=='all'&&!cards.trim())return '';
+    return `<div class="section-block">
+      <div class="section-title"><span class="section-name">${sec}</span><span class="sec-count">${done}/${ts.length}</span><span class="sec-pct">${pct}%</span></div>
+      <div class="topic-grid">${cards}</div>
+    </div>`;
+  }).join('');
+}
+async function cycleTS(k) {
+  const s=TS[k]; TS[k]=s==='none'?'progress':s==='progress'?'done':'none';
+  renderTracker(); updProgress(); renderDash();
+  await dbSaveTopic(k, TS[k]);
+}
+function filterTopics(f,el){
+  tFilter=f;
+  document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active'); renderTracker();
+}
+
+// ── QUESTIONS ─────────────────────────────────────────
+function renderQ() {
+  const filtered = qFilter==='all'?QS:QS.filter(q=>q.cat===qFilter);
+  document.getElementById('q-list').innerHTML = filtered.map((q,i)=>`
+    <div class="q-card">
+      <div class="q-head" onclick="toggleQ(${i})">
+        <div class="qdot dot-${q.cat}"></div>
+        <div class="qtext">${q.q}</div>
+        <span class="diff diff-${q.diff}">${q.diff}</span>
+        <div class="qtog" id="qt-${i}">▾</div>
+      </div>
+      <div class="q-ans" id="qa-${i}"><p>${q.a}</p></div>
+    </div>`).join('');
+}
+function toggleQ(i){
+  document.getElementById('qa-'+i).classList.toggle('open');
+  document.getElementById('qt-'+i).classList.toggle('open');
+}
+function filterQ(cat,el){
+  qFilter=cat;
+  document.querySelectorAll('.qbtn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active'); renderQ();
+}
+
+// ── MOCK ──────────────────────────────────────────────
+function selMockCat(cat,el){ mockCat=cat; document.querySelectorAll('.mock-opt').forEach(o=>o.classList.remove('selected')); el.classList.add('selected'); }
+function startMock(){
+  const pool=mockCat==='all'?[...QS]:QS.filter(q=>q.cat===mockCat);
+  mockQ=pool.sort(()=>Math.random()-0.5).slice(0,5); mockIdx=0;
+  document.getElementById('mock-setup').style.display='none';
+  document.getElementById('mock-session').classList.add('active');
+  showMQ();
+}
+function showMQ(){
+  if(mockIdx>=mockQ.length){endMock();return;}
+  const q=mockQ[mockIdx];
+  document.getElementById('mq-label').textContent=`Question ${mockIdx+1} of ${mockQ.length}`;
+  document.getElementById('mq-text').textContent=q.q;
+  document.getElementById('mq-answer').value='';
+  document.getElementById('mq-hint').textContent='Hint: '+q.a.split('.')[0]+'.';
+  document.getElementById('mq-hint').classList.remove('show');
+  document.getElementById('mq-feedback').classList.remove('show');
+  clearInterval(mockInt); mockSec=0; document.getElementById('mq-timer').textContent='00:00';
+  mockInt=setInterval(()=>{ mockSec++; document.getElementById('mq-timer').textContent=String(Math.floor(mockSec/60)).padStart(2,'0')+':'+String(mockSec%60).padStart(2,'0'); },1000);
+}
+function showHint(){ document.getElementById('mq-hint').classList.add('show'); }
+function submitMock(){
+  clearInterval(mockInt);
+  const ans=document.getElementById('mq-answer').value.trim();
+  const q=mockQ[mockIdx];
+  const score=ans.length>50?4:ans.length>20?3:ans.length>5?2:1;
+  document.getElementById('mq-score').innerHTML=`<div class="score-dots">${Array.from({length:5},(_,i)=>`<div class="sdot ${i<score?'on':''}"></div>`).join('')}</div><span style="font-size:12px;color:var(--muted)">${score}/5</span>`;
+  document.getElementById('mq-fb-text').innerHTML=`<strong style="color:var(--text);font-weight:500">Model answer:</strong><br>${q.a}`;
+  document.getElementById('mq-feedback').classList.add('show');
+}
+function nextMock(){ mockIdx++; showMQ(); }
+function skipMock(){ mockIdx++; showMQ(); }
+function endMock(){
+  clearInterval(mockInt);
+  document.getElementById('mock-session').classList.remove('active');
+  document.getElementById('mock-setup').style.display='block';
+  document.getElementById('mq-feedback').classList.remove('show');
+}
+
+// ── NOTES ─────────────────────────────────────────────
+function renderNotes(){
+  renderNoteList();
+  if(notes.length>0){
+    if(!activeNote) activeNote=notes[0].id;
+    const n=notes.find(n=>n.id===activeNote)||notes[0];
+    document.getElementById('note-title').value=n.title||'';
+    document.getElementById('note-body').value=n.body||'';
+  }
+}
+function renderNoteList(){
+  document.getElementById('note-items').innerHTML=notes.map(n=>`
+    <div class="note-item ${n.id===activeNote?'active':''}" onclick="openNote('${n.id}')">
+      <div class="note-item-title">${n.title||'Untitled'}</div>
+      <div class="note-item-date">${n.updated_at?new Date(n.updated_at).toLocaleDateString():'just now'}</div>
+    </div>`).join('');
+}
+function openNote(id){
+  activeNote=id;
+  const n=notes.find(n=>n.id===id);
+  if(n){ document.getElementById('note-title').value=n.title||''; document.getElementById('note-body').value=n.body||''; }
+  renderNoteList();
+}
+async function newNote(){
+  const n={title:'',body:'',updated_at:new Date().toISOString()};
+  notes.unshift(n); activeNote=null; renderNoteList();
+  document.getElementById('note-title').value=''; document.getElementById('note-body').value='';
+  await dbSaveNote(n); activeNote=n.id; renderNoteList();
+}
+function schedNoteSave(){
+  const n=notes.find(n=>n.id===activeNote); if(!n)return;
+  n.title=document.getElementById('note-title').value;
+  n.body=document.getElementById('note-body').value;
+  renderNoteList();
+  clearTimeout(noteSaveT);
+  noteSaveT=setTimeout(async()=>{
+    await dbSaveNote(n);
+    document.getElementById('note-saved').textContent='Saved · '+new Date().toLocaleTimeString();
+  }, 800);
+}
+
+// ── INIT ──────────────────────────────────────────────
+(async()=>{
+  setSync('syncing');
+  await loadDB();
+  renderDash(); renderQ(); renderRM(); updProgress();
+  const loader=document.getElementById('loader');
+  loader.classList.add('hidden');
+  setTimeout(()=>loader.remove(),500);
+})();
+</script>
+</body>
+</html>
