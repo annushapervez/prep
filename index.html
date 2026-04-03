@@ -819,7 +819,10 @@ function renderSchedule() {
     </div>
     ${filtered.map(d=>{
       const done = schedDone.has(d.date);
-      const isToday = d.date.includes(today.toLocaleDateString('en-US',{month:'short',day:'numeric'}));
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      const todayStr = days[today.getDay()] + ' ' + months[today.getMonth()] + ' ' + today.getDate();
+      const isToday = d.date === todayStr;
       return `<div onclick="toggleSchedDay('${d.date}')" style="background:var(--surface);border:1px solid ${done?'rgba(200,240,96,0.25)':isToday?'rgba(96,200,240,0.3)':'var(--border)'};border-radius:var(--radius-lg);padding:18px 20px;margin-bottom:10px;cursor:pointer;transition:border-color 0.15s;${done?'background:rgba(200,240,96,0.02);':''}">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
           <div style="width:20px;height:20px;border-radius:50%;border:0.5px solid ${done?'var(--accent)':'var(--border2)'};background:${done?'rgba(200,240,96,0.2)':'transparent'};display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--accent);flex-shrink:0;">${done?'✓':''}</div>
