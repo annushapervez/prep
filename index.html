@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DevPrep — Web Dev Interview Prep</title>
+<title>Annu's Interview Prep</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -228,6 +228,7 @@
       <div class="nav-label">Practice</div>
       <div class="nav-item" onclick="showPage('mock',this)"><span class="nav-icon">▷</span>Mock interview<span class="ndot"></span></div>
       <div class="nav-item" onclick="showPage('notes',this)"><span class="nav-icon">✎</span>Notes<span class="ndot"></span></div>
+      <div class="nav-item" onclick="showPage('schedule',this)"><span class="nav-icon">◈</span>Schedule<span class="ndot"></span></div> 
     </nav>
     <div class="sidebar-footer">
       <div class="sync-row"><div class="sync-dot" id="sdot"></div><span id="slabel">connecting...</span></div>
@@ -295,8 +296,9 @@
       <div class="mock-setup" id="mock-setup">
         <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:600;margin-bottom:4px;">Choose your focus</div>
         <div style="font-size:13px;color:var(--muted)">Pick a category to drill into:</div>
-        <div class="mock-options">
-          <div class="mock-opt selected" onclick="selMockCat('all',this)"><div class="mock-opt-icon">⬡</div><div class="mock-opt-name">Mixed</div><div class="mock-opt-desc">All topics</div></div>
+        <div class="mock-options" style="grid-template-columns:1fr 1fr;">
+          <div class="mock-opt selected" onclick="selMockCat('all',this)"><div class="mock-opt-icon">⬡</div><div class="mock-opt-name">Mixed (technical)</div><div class="mock-opt-desc">All tech topics</div></div>
+          <div class="mock-opt" onclick="selMockCat('behavioral',this)"><div class="mock-opt-icon">◎</div><div class="mock-opt-name">Behavioral</div><div class="mock-opt-desc">STAR format questions</div></div>
           <div class="mock-opt" onclick="selMockCat('js',this)"><div class="mock-opt-icon">{ }</div><div class="mock-opt-name">JavaScript</div><div class="mock-opt-desc">Core JS concepts</div></div>
           <div class="mock-opt" onclick="selMockCat('react',this)"><div class="mock-opt-icon">⟳</div><div class="mock-opt-name">React</div><div class="mock-opt-desc">Hooks & patterns</div></div>
         </div>
@@ -327,6 +329,14 @@
       </div>
     </div>
 
+     // <!-- SCHEDULE -->
+<div id="page-schedule" class="page">
+  <div class="page-title">10-week schedule</div>
+  <div class="page-desc">Your daily plan from April 6 — June 13. Technical focus + 2 behavioral questions every study day.</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px;" id="week-filters"></div>
+  <div id="schedule-content"></div>
+</div>
+
     <!-- NOTES -->
     <div id="page-notes" class="page">
       <div class="page-title">Notes</div>
@@ -348,6 +358,7 @@
 </div>
 
 <script>
+
 // ── SUPABASE ──────────────────────────────────────────
 const SURL = 'https://okofhclusdrvrbjbocqf.supabase.co';
 const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9rb2ZoY2x1c2RydnJiamJvY3FmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxNjc2OTksImV4cCI6MjA5MDc0MzY5OX0.N5TdP7VYyLVQwU1BMWe9B3zJMdqMteAb7AB_5xNMQk4';
@@ -419,6 +430,21 @@ const QS = [
   {cat:'api',diff:'med',q:"Explain what CORS is and why it exists.",a:"CORS is a browser security mechanism restricting requests to a different origin (domain/port/protocol). It prevents malicious sites from reading sensitive data using the user's credentials. Servers opt in via <code>Access-Control-Allow-Origin</code> headers. Your own APIs must explicitly allow cross-origin requests."},
   {cat:'api',diff:'med',q:"What is a REST API and what makes an API RESTful?",a:"REST is an architectural style. Key constraints: (1) Stateless — each request is self-contained. (2) Resource-based URLs (<code>/users/123</code> not <code>/getUser?id=123</code>). (3) HTTP methods signal intent. (4) Uniform interface. An API is RESTful when it follows these conventions consistently."},
   {cat:'api',diff:'hard',q:"How does JWT authentication work?",a:"On login the server creates a JWT — Base64 header + payload (user data) + signature. The signature uses a server secret so it can't be forged. The client sends it with every request in <code>Authorization: Bearer &lt;token&gt;</code>. The server verifies the signature — no DB lookup needed, making it fast and stateless. Downside: tokens can't be invalidated until expiry."},
+];
+
+const BEHAVIORAL_QS = [
+  {q:"Tell me about yourself.",hint:"Keep it to 90 seconds. Cover: who you are, what you've studied/built, and why you're interested in this role. End by connecting your background to the job.",star:false},
+  {q:"Why do you want to work here?",hint:"Research the company before your interview. Mention something specific — their product, mission, or tech stack. Show you chose them, not just any job.",star:false},
+  {q:"Tell me about a time you faced a difficult problem and how you solved it.",hint:"Use STAR: Situation (context), Task (your responsibility), Action (what you did), Result (outcome). Pick a real example — a project, class, or personal build.",star:true},
+  {q:"Tell me about a time you worked in a team and there was a conflict.",hint:"Focus on how you handled it, not who was wrong. Show you can communicate, compromise, and keep moving forward.",star:true},
+  {q:"Describe a project you're most proud of.",hint:"Walk through what it was, why you built it, what was hard, and what you'd do differently. Have this answer ready for any role.",star:true},
+  {q:"Tell me about a time you had to learn something new quickly.",hint:"Great for showing adaptability. Could be a new framework, tool, or concept you picked up for a project or class.",star:true},
+  {q:"What's your biggest weakness?",hint:"Pick something real but not critical to the job. Show you're aware of it and actively working on it. Never say 'I work too hard.'",star:false},
+  {q:"Where do you see yourself in 3 years?",hint:"Show ambition but stay realistic. Connect it to growth in this role — learning, contributing, and taking on more responsibility.",star:false},
+  {q:"Tell me about a time you missed a deadline or made a mistake.",hint:"Honesty matters here. What happened, what did you do about it, and what did you change afterward? Interviewers want to see accountability.",star:true},
+  {q:"Why are you transitioning into web development?",hint:"Your CS + psych background is a strength — frame it that way. Talk about what drew you to building things and how your background gives you a different perspective.",star:false},
+  {q:"Tell me about a time you had to explain something technical to a non-technical person.",hint:"Shows communication skills. Could be explaining a project to a friend, family member, or classmate from a different major.",star:true},
+  {q:"How do you handle working under pressure or tight deadlines?",hint:"Give a specific example. Show you stay organized, prioritize well, and communicate when something's at risk.",star:true},
 ];
 
 const ROADMAP = [
@@ -496,8 +522,8 @@ function showPage(id, el) {
   if (id==='roadmap') renderRM();
   if (id==='tracker') renderTracker();
   if (id==='questions') renderQ();
-  if (id==='notes') renderNotes();
-}
+if (id==='notes') renderNotes();
+  if (id==='schedule') renderSchedule();}
 
 // ── PROGRESS ──────────────────────────────────────────
 const getDone = () => Object.values(TS).filter(s=>s==='done').length;
@@ -608,32 +634,44 @@ function filterQ(cat,el){
 // ── MOCK ──────────────────────────────────────────────
 function selMockCat(cat,el){ mockCat=cat; document.querySelectorAll('.mock-opt').forEach(o=>o.classList.remove('selected')); el.classList.add('selected'); }
 function startMock(){
-  const pool=mockCat==='all'?[...QS]:QS.filter(q=>q.cat===mockCat);
+  let pool;
+  if(mockCat==='behavioral') pool=[...BEHAVIORAL_QS];
+  else if(mockCat==='all') pool=[...QS];
+  else pool=QS.filter(q=>q.cat===mockCat);
   mockQ=pool.sort(()=>Math.random()-0.5).slice(0,5); mockIdx=0;
   document.getElementById('mock-setup').style.display='none';
   document.getElementById('mock-session').classList.add('active');
   showMQ();
 }
+
 function showMQ(){
   if(mockIdx>=mockQ.length){endMock();return;}
   const q=mockQ[mockIdx];
-  document.getElementById('mq-label').textContent=`Question ${mockIdx+1} of ${mockQ.length}`;
+  const isBehavioral=!!q.hint;
+  document.getElementById('mq-label').textContent=`Question ${mockIdx+1} of ${mockQ.length}` + (isBehavioral?' · behavioral':' · technical');
   document.getElementById('mq-text').textContent=q.q;
   document.getElementById('mq-answer').value='';
-  document.getElementById('mq-hint').textContent='Hint: '+q.a.split('.')[0]+'.';
-  document.getElementById('mq-hint').classList.remove('show');
+  const hintEl=document.getElementById('mq-hint');
+  hintEl.innerHTML=(isBehavioral && q.star?'<span style="font-size:10px;padding:2px 8px;border-radius:999px;background:rgba(200,240,96,0.1);color:var(--accent);border:1px solid rgba(200,240,96,0.2);margin-right:8px;font-family:DM Mono,monospace;">STAR format</span>':'')+('Hint: '+(isBehavioral?q.hint:q.a.split('.')[0]+'.'));
+  hintEl.classList.remove('show');
   document.getElementById('mq-feedback').classList.remove('show');
   clearInterval(mockInt); mockSec=0; document.getElementById('mq-timer').textContent='00:00';
   mockInt=setInterval(()=>{ mockSec++; document.getElementById('mq-timer').textContent=String(Math.floor(mockSec/60)).padStart(2,'0')+':'+String(mockSec%60).padStart(2,'0'); },1000);
 }
+
 function showHint(){ document.getElementById('mq-hint').classList.add('show'); }
+
 function submitMock(){
   clearInterval(mockInt);
   const ans=document.getElementById('mq-answer').value.trim();
   const q=mockQ[mockIdx];
+  const isBehavioral=!!q.hint;
   const score=ans.length>50?4:ans.length>20?3:ans.length>5?2:1;
   document.getElementById('mq-score').innerHTML=`<div class="score-dots">${Array.from({length:5},(_,i)=>`<div class="sdot ${i<score?'on':''}"></div>`).join('')}</div><span style="font-size:12px;color:var(--muted)">${score}/5</span>`;
-  document.getElementById('mq-fb-text').innerHTML=`<strong style="color:var(--text);font-weight:500">Model answer:</strong><br>${q.a}`;
+  document.getElementById('mq-fb-text').innerHTML=isBehavioral
+    ? `<strong style="color:var(--text);font-weight:500">Tip:</strong><br>${q.hint}`
+      + (q.star?`<br><br><strong style="color:var(--text);font-weight:500">STAR reminder:</strong><br><span style="color:var(--muted);font-size:13px;line-height:1.8"><b style="color:var(--accent3)">S</b>ituation — set the context<br><b style="color:var(--accent3)">T</b>ask — what was your responsibility<br><b style="color:var(--accent3)">A</b>ction — what did you specifically do<br><b style="color:var(--accent3)">R</b>esult — what was the outcome</span>`:'')
+    : `<strong style="color:var(--text);font-weight:500">Model answer:</strong><br>${q.a}`;
   document.getElementById('mq-feedback').classList.add('show');
 }
 function nextMock(){ mockIdx++; showMQ(); }
@@ -685,6 +723,130 @@ function schedNoteSave(){
     document.getElementById('note-saved').textContent='Saved · '+new Date().toLocaleTimeString();
   }, 800);
 }
+
+// ── SCHEDULE ──────────────────────────────────────────
+const SCHEDULE = [
+  // WEEK 1 — HTML & CSS: Box model + basics
+  {date:'Mon Apr 7',week:1,tech:'What is CSS + how it connects to HTML',technical_detail:'Link a stylesheet, write your first rules — colors, font-size, background. Watch: Kevin Powell CSS Basics.',behavioral:['Tell me about yourself.','Why do you want to work in tech?']},
+  {date:'Tue Apr 8',week:1,tech:'The box model — content, padding, border, margin',technical_detail:'Understand why elements are sized the way they are. Learn box-sizing: border-box. Watch: Kevin Powell Box Model.',behavioral:['Tell me about a project you\'re proud of.','What\'s your biggest weakness?']},
+  {date:'Wed Apr 9',week:1,tech:'CSS selectors and specificity',technical_detail:'Target elements by class, ID, element type. Write the specificity rule from memory. Watch: Kevin Powell Selectors.',behavioral:['Tell me about yourself.','Why are you transitioning into web development?']},
+  {date:'Thu Apr 10',week:1,tech:'Typography, colors, and units',technical_detail:'Learn px vs rem vs %, hex vs rgba. Build a styled article page. Watch: Kevin Powell CSS Units.',behavioral:['Tell me about a time you learned something new quickly.','Where do you see yourself in 3 years?']},
+  {date:'Fri Apr 11',week:1,tech:'Box model mini project — product card',technical_detail:'Build a product card: image, title, price, button — from scratch. Use everything from this week.',behavioral:['Tell me about a time you worked in a team with conflict.','How do you handle working under pressure?']},
+
+  // WEEK 2 — HTML & CSS: Flexbox + responsive
+  {date:'Mon Apr 14',week:2,tech:'Flexbox — main axis and cross axis',technical_detail:'Learn justify-content and align-items. These handle 80% of flexbox needs. Play Flexbox Froggy all 24 levels.',behavioral:['Tell me about a time you missed a deadline or made a mistake.','Tell me about yourself.']},
+  {date:'Tue Apr 15',week:2,tech:'Flexbox — wrapping, gap, flex-grow',technical_detail:'Build a row of cards that wraps on smaller screens. Watch: Kevin Powell Flex Properties.',behavioral:['Describe a project you\'re most proud of.','Why do you want to work here?']},
+  {date:'Wed Apr 16',week:2,tech:'Responsive design and media queries',technical_detail:'Build mobile-first — start small and scale up. Make your card stack on mobile. Watch: Kevin Powell Media Queries.',behavioral:['Tell me about a time you had to explain something technical to a non-technical person.','What\'s your biggest weakness?']},
+  {date:'Thu Apr 17',week:2,tech:'Flexbox layout — build a navbar',technical_detail:'Logo on the left, links on the right. Make it collapse on mobile. Most common flexbox pattern in interviews.',behavioral:['Tell me about a time you faced a difficult problem and how you solved it.','How do you handle working under pressure?']},
+  {date:'Fri Apr 18',week:2,tech:'Final project — hero landing page section',technical_detail:'Heading, subtext, button, image side by side. Responsive. Styled. From scratch. Practice explaining it out loud.',behavioral:['Why are you transitioning into web development?','Where do you see yourself in 3 years?']},
+
+  // WEEK 3 — HTML & CSS: Grid + a11y + CSS variables
+  {date:'Mon Apr 21',week:3,tech:'CSS Grid — rows, columns, fr units',technical_detail:'Define a grid with grid-template-columns. Learn the fr unit. Play Grid Garden all 28 levels.',behavioral:['Tell me about a time you had to learn something new quickly.','Tell me about yourself.']},
+  {date:'Tue Apr 22',week:3,tech:'CSS Grid — template areas and placement',technical_detail:'Build a full page layout: header, sidebar, main, footer using grid-template-areas. Watch: Kevin Powell Grid Areas.',behavioral:['Tell me about a time you worked in a team with conflict.','Describe a project you\'re most proud of.']},
+  {date:'Wed Apr 23',week:3,tech:'Accessibility — semantic HTML and ARIA',technical_detail:'Learn why semantic elements matter for screen readers. When to use ARIA labels. Alt text rules. Audit your navbar.',behavioral:['Tell me about a time you missed a deadline or made a mistake.','Why do you want to work here?']},
+  {date:'Thu Apr 24',week:3,tech:'Accessibility — keyboard navigation and focus',technical_detail:'Tab through all your projects using only a keyboard. Fix anything broken. Add :focus-visible styles.',behavioral:['Tell me about a time you faced a difficult problem and how you solved it.','How do you handle working under pressure?']},
+  {date:'Fri Apr 25',week:3,tech:'CSS custom properties + HTML/CSS review',technical_detail:'Build a light/dark theme with CSS variables. Then answer all 8 HTML/CSS tracker topics out loud without notes.',behavioral:['Tell me about a time you had to explain something technical to a non-technical person.','What\'s your biggest weakness?']},
+
+  // WEEK 4 — JavaScript: Core concepts
+  {date:'Mon Apr 28',week:4,tech:'JavaScript — closures and scope',technical_detail:'Understand lexical scope and why closures work. Build a counter using a closure. Watch: JavaScript Closures explained.',behavioral:['Tell me about yourself.','Why are you transitioning into web development?']},
+  {date:'Tue Apr 29',week:4,tech:'JavaScript — async/await and Promises',technical_detail:'Fetch data from a public API using fetch() and async/await. Handle errors with try/catch. Watch: Async JS.',behavioral:['Tell me about a time you learned something new quickly.','Describe a project you\'re most proud of.']},
+  {date:'Wed Apr 30',week:4,tech:'JavaScript — DOM manipulation and events',technical_detail:'querySelector, addEventListener, creating and removing elements. Build a simple to-do list in vanilla JS.',behavioral:['Tell me about a time you worked in a team with conflict.','Where do you see yourself in 3 years?']},
+  {date:'Thu May 1',week:4,tech:'JavaScript — array methods',technical_detail:'Practice map, filter, reduce on real data. Build a product filter UI. These come up in almost every JS screen.',behavioral:['Tell me about a time you missed a deadline or made a mistake.','How do you handle working under pressure?']},
+  {date:'Fri May 2',week:4,tech:'JavaScript — ES6+ features',technical_detail:'Destructuring, spread, rest, template literals, modules. Rewrite older code using ES6 syntax.',behavioral:['Tell me about a time you had to explain something technical to a non-technical person.','Why do you want to work here?']},
+
+  // WEEK 5 — JavaScript: Advanced + review
+  {date:'Mon May 5',week:5,tech:'JavaScript — this keyword and binding',technical_detail:'Understand how this changes in regular functions, arrow functions, and callbacks. Practice bind, call, apply.',behavioral:['Tell me about yourself.','Tell me about a time you faced a difficult problem and how you solved it.']},
+  {date:'Tue May 6',week:5,tech:'JavaScript — error handling',technical_detail:'try/catch/finally, custom error types, handling async errors. Build something that fails gracefully.',behavioral:['What\'s your biggest weakness?','Tell me about a time you learned something new quickly.']},
+  {date:'Wed May 7',week:5,tech:'JavaScript — type coercion and the event loop',technical_detail:'Understand == vs ===, truthy/falsy, and how the event loop + microtask queue works. Draw it from memory.',behavioral:['Describe a project you\'re most proud of.','Why are you transitioning into web development?']},
+  {date:'Thu May 8',week:5,tech:'JavaScript mini project — interactive UI',technical_detail:'Build something that uses fetch, DOM manipulation, and array methods together. A weather app or movie search works well.',behavioral:['Tell me about a time you worked in a team with conflict.','Where do you see yourself in 3 years?']},
+  {date:'Fri May 9',week:5,tech:'JavaScript review — answer all 8 JS topics out loud',technical_detail:'Go through every JS topic on your tracker. Answer each one clearly without notes. Mark them done only when confident.',behavioral:['Tell me about a time you missed a deadline or made a mistake.','How do you handle working under pressure?']},
+
+  // WEEK 6 — React: Core
+  {date:'Mon May 12',week:6,tech:'React — components and JSX',technical_detail:'Understand what a component is. Learn JSX syntax. Build a simple component tree. Watch: React crash course.',behavioral:['Tell me about yourself.','Why do you want to work here?']},
+  {date:'Tue May 13',week:6,tech:'React — useState and props',technical_detail:'Build a counter and a toggle. Pass props between parent and child. Understand one-way data flow.',behavioral:['Tell me about a time you had to explain something technical to a non-technical person.','Describe a project you\'re most proud of.']},
+  {date:'Wed May 14',week:6,tech:'React — useEffect and side effects',technical_detail:'Fetch data on mount. Understand the dependency array. Write a cleanup function. Watch: useEffect deep dive.',behavioral:['Tell me about a time you faced a difficult problem and how you solved it.','What\'s your biggest weakness?']},
+  {date:'Thu May 15',week:6,tech:'React — controlled forms',technical_detail:'Build a form where every input is controlled by state. Handle submission. Validate at least one field.',behavioral:['Tell me about a time you learned something new quickly.','Why are you transitioning into web development?']},
+  {date:'Fri May 16',week:6,tech:'React — lifting state and component structure',technical_detail:'Move state up to a shared parent. Practice passing handlers as props. Restructure a component that got too big.',behavioral:['Tell me about a time you worked in a team with conflict.','Where do you see yourself in 3 years?']},
+
+  // WEEK 7 — React: Advanced
+  {date:'Mon May 19',week:7,tech:'React — Context API',technical_detail:'Build a theme or auth context. Consume it from a deeply nested component without prop drilling.',behavioral:['Tell me about yourself.','Tell me about a time you missed a deadline or made a mistake.']},
+  {date:'Tue May 20',week:7,tech:'React — virtual DOM and reconciliation',technical_detail:'Understand how React diffs and updates the DOM. Explain it out loud. Watch: How React works under the hood.',behavioral:['How do you handle working under pressure?','Describe a project you\'re most proud of.']},
+  {date:'Wed May 21',week:7,tech:'React — performance basics',technical_detail:'Learn React.memo, useMemo, useCallback, and lazy loading. Add lazy loading to one component in your project.',behavioral:['Tell me about a time you had to explain something technical to a non-technical person.','Why do you want to work here?']},
+  {date:'Thu May 22',week:7,tech:'React mini project — full component app',technical_detail:'Build a small app with at least 3 components, 2 hooks, and an API call. A task manager or movie list works well.',behavioral:['Tell me about a time you faced a difficult problem and how you solved it.','What\'s your biggest weakness?']},
+  {date:'Fri May 23',week:7,tech:'React review — answer all 7 React topics out loud',technical_detail:'Go through every React topic on your tracker. Answer each clearly without notes. Mark done only when confident.',behavioral:['Tell me about a time you learned something new quickly.','Why are you transitioning into web development?']},
+
+  // WEEK 8 — Backend & APIs
+  {date:'Mon May 26',week:8,tech:'REST principles and HTTP methods',technical_detail:'Learn GET, POST, PUT, PATCH, DELETE. Understand status codes. Use Postman or Insomnia to test a public API.',behavioral:['Tell me about yourself.','Tell me about a time you worked in a team with conflict.']},
+  {date:'Tue May 27',week:8,tech:'HTTP fundamentals — headers, cookies, CORS',technical_detail:'Understand what happens in a request/response. Learn why CORS exists and how to fix it. Inspect headers in DevTools.',behavioral:['Where do you see yourself in 3 years?','Tell me about a time you missed a deadline or made a mistake.']},
+  {date:'Wed May 28',week:8,tech:'Authentication — JWT, sessions, OAuth basics',technical_detail:'Understand how JWT works end to end. Learn the difference between authentication and authorization. Draw the flow.',behavioral:['How do you handle working under pressure?','Describe a project you\'re most proud of.']},
+  {date:'Thu May 29',week:8,tech:'Node.js and Express basics',technical_detail:'Build a simple Express server with 3 routes. Return JSON. Handle a 404. Watch: Node.js crash course.',behavioral:['Tell me about a time you had to explain something technical to a non-technical person.','Why do you want to work here?']},
+  {date:'Fri May 30',week:8,tech:'Databases basics — SQL vs NoSQL concepts',technical_detail:'Understand when to use each. Learn basic SQL queries: SELECT, INSERT, WHERE, JOIN. No need to build — just understand.',behavioral:['Tell me about a time you faced a difficult problem and how you solved it.','What\'s your biggest weakness?']},
+
+  // WEEK 9 — Backend review + full stack integration
+  {date:'Mon Jun 2',week:9,tech:'Error handling in APIs',technical_detail:'Return proper status codes. Build middleware that catches errors globally. Never expose stack traces to the client.',behavioral:['Tell me about yourself.','Tell me about a time you learned something new quickly.']},
+  {date:'Tue Jun 3',week:9,tech:'Connect frontend to backend — full stack mini project',technical_detail:'Build a simple React frontend that fetches from your Express API. Display the data. Handle loading and error states.',behavioral:['Why are you transitioning into web development?','Tell me about a time you worked in a team with conflict.']},
+  {date:'Wed Jun 4',week:9,tech:'Backend review — answer all 7 API topics out loud',technical_detail:'Go through every Backend & APIs topic on your tracker. Answer each clearly without notes. Mark done when confident.',behavioral:['Where do you see yourself in 3 years?','Tell me about a time you missed a deadline or made a mistake.']},
+  {date:'Thu Jun 5',week:9,tech:'Portfolio — document your projects',technical_detail:'Write a README for each project. Be able to explain what it does, what you built it with, and what was hard.',behavioral:['How do you handle working under pressure?','Describe a project you\'re most proud of.']},
+  {date:'Fri Jun 6',week:9,tech:'Full technical review — all 30 topics',technical_detail:'Go through every topic across all 4 sections. For any you can\'t explain clearly, flag it and revisit over the weekend.',behavioral:['Tell me about a time you had to explain something technical to a non-technical person.','Why do you want to work here?']},
+
+  // WEEK 10 — Interview practice
+  {date:'Mon Jun 9',week:10,tech:'Mock technical interview — HTML/CSS + JavaScript',technical_detail:'Do a full timed mock session on this site. No hints. Write answers as if you\'re in a real interview. Review all feedback.',behavioral:['Tell me about yourself.','Tell me about a time you faced a difficult problem and how you solved it.']},
+  {date:'Tue Jun 10',week:10,tech:'Mock technical interview — React + APIs',technical_detail:'Another full timed mock session focused on React and Backend. Review weak spots immediately after.',behavioral:['What\'s your biggest weakness?','Tell me about a time you learned something new quickly.']},
+  {date:'Wed Jun 11',week:10,tech:'Behavioral practice — full round',technical_detail:'No technical today. Run through all 12 behavioral questions out loud. Record yourself if possible. Time each answer to 2 min.',behavioral:['Tell me about a time you worked in a team with conflict.','Tell me about a time you missed a deadline or made a mistake.']},
+  {date:'Thu Jun 12',week:10,tech:'Weak spots — targeted review',technical_detail:'Look at your tracker. Find anything not marked done. Spend the full session on those topics only.',behavioral:['Why are you transitioning into web development?','Where do you see yourself in 3 years?']},
+  {date:'Fri Jun 13',week:10,tech:'Final prep — you\'re ready',technical_detail:'Light review only. Re-read your notes. Run one mock session. Get off the computer early. Rest before interviews.',behavioral:['Tell me about yourself.','Describe a project you\'re most proud of.']},
+];
+
+let schedDone = new Set(JSON.parse(localStorage.getItem('sched-done') || '[]'));
+let activeWeek = 1;
+
+function renderSchedule() {
+  const today = new Date();
+  const filterEl = document.getElementById('week-filters');
+  filterEl.innerHTML = Array.from({length:10},(_,i)=>i+1).map(w=>
+    `<button onclick="filterWeek(${w},this)" class="fbtn ${w===activeWeek?'active':''}" style="min-width:70px;">Week ${w}</button>`
+  ).join('');
+
+  const filtered = SCHEDULE.filter(d=>d.week===activeWeek);
+  const weekDone = filtered.filter(d=>schedDone.has(d.date)).length;
+
+  document.getElementById('schedule-content').innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+      <div style="flex:1;height:5px;background:var(--surface2);border-radius:999px;overflow:hidden;">
+        <div style="width:${Math.round(weekDone/filtered.length*100)}%;height:100%;background:var(--accent);border-radius:999px;transition:width 0.4s;"></div>
+      </div>
+      <span style="font-size:12px;color:var(--muted);min-width:60px;text-align:right;">${weekDone}/${filtered.length} days</span>
+    </div>
+    ${filtered.map(d=>{
+      const done = schedDone.has(d.date);
+      const isToday = d.date.includes(today.toLocaleDateString('en-US',{month:'short',day:'numeric'}));
+      return `<div onclick="toggleSchedDay('${d.date}')" style="background:var(--surface);border:1px solid ${done?'rgba(200,240,96,0.25)':isToday?'rgba(96,200,240,0.3)':'var(--border)'};border-radius:var(--radius-lg);padding:18px 20px;margin-bottom:10px;cursor:pointer;transition:border-color 0.15s;${done?'background:rgba(200,240,96,0.02);':''}">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+          <div style="width:20px;height:20px;border-radius:50%;border:0.5px solid ${done?'var(--accent)':'var(--border2)'};background:${done?'rgba(200,240,96,0.2)':'transparent'};display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--accent);flex-shrink:0;">${done?'✓':''}</div>
+          <span style="font-family:'DM Mono',monospace;font-size:11px;color:${isToday?'var(--accent2)':'var(--dim)'};">${d.date}${isToday?' · today':''}</span>
+          ${done?'<span style="font-family:DM Mono,monospace;font-size:10px;padding:2px 8px;border-radius:999px;background:rgba(200,240,96,0.1);color:var(--accent);margin-left:auto;">done</span>':''}
+        </div>
+        <div style="font-family:\'Syne\',sans-serif;font-size:15px;font-weight:600;margin-bottom:6px;color:var(--text);">${d.tech}</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:12px;">${d.technical_detail}</div>
+        <div style="border-top:1px solid var(--border);padding-top:10px;display:flex;flex-direction:column;gap:6px;">
+          <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);margin-bottom:2px;">Behavioral · 2 questions</div>
+          ${d.behavioral.map(b=>`<div style="font-size:12px;color:var(--muted);display:flex;align-items:flex-start;gap:8px;"><span style="color:var(--accent);margin-top:1px;flex-shrink:0;">›</span>${b}</div>`).join('')}
+        </div>
+      </div>`;
+    }).join('')}`;
+}
+
+function filterWeek(w, el) {
+  activeWeek = w;
+  renderSchedule();
+}
+
+function toggleSchedDay(date) {
+  if(schedDone.has(date)) schedDone.delete(date); else schedDone.add(date);
+  localStorage.setItem('sched-done', JSON.stringify([...schedDone]));
+  renderSchedule();
+}
+
 
 // ── INIT ──────────────────────────────────────────────
 (async()=>{
